@@ -1,13 +1,22 @@
 import java.util.*
 
 fun main() {
+    val variables: MutableMap<String, Int> = mutableMapOf<String, Int>()
     var newExpression: String?
     while(true) {
         newExpression = readLine()
         if(newExpression == null || newExpression == ""){
             continue
         }
-        countPolishExpr(infixToPolishNotation(newExpression))
+        val cutExp = newExpression.split("=")
+        if(cutExp[0] == newExpression){
+            countPolishExpr(infixToPolishNotation(newExpression))
+        } else {
+            val cutExp2 = cutExp[0].split("let ")
+            if (cutExp2[0] != cutExp[0]){
+                variables.put(cutExp2[1].trimEnd(), countPolishExpr(infixToPolishNotation(cutExp[1])))
+            }
+        }
     }
 }
 fun countPolishExpr(stack:LinkedList<Any>):Int{
@@ -23,7 +32,7 @@ fun countPolishExpr(stack:LinkedList<Any>):Int{
             '-' -> {
                 var a = countStack.pop()
                 var b = countStack.pop()
-                countStack.push(a-b)
+                countStack.push(b-a)
             }
             '*' -> {
                 var a = countStack.pop()
@@ -33,7 +42,7 @@ fun countPolishExpr(stack:LinkedList<Any>):Int{
             '/' -> {
                 var a = countStack.pop()
                 var b = countStack.pop()
-                countStack.push(a/b)
+                countStack.push(b/a)
             }
             else -> {
                 countStack.push(top.toString().toInt())
