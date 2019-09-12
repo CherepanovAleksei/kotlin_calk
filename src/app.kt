@@ -1,24 +1,31 @@
+import java.lang.Exception
 import java.util.*
+val variables: MutableMap<String, Int> = mutableMapOf<String, Int>()
 
 fun main() {
-    val variables: MutableMap<String, Int> = mutableMapOf<String, Int>()
     var newExpression: String?
     while(true) {
+        print(">>>")
         newExpression = readLine()
         if(newExpression == null || newExpression == ""){
             continue
         }
         val cutExp = newExpression.split("=")
-        if(cutExp[0] == newExpression){
-            countPolishExpr(infixToPolishNotation(newExpression))
-        } else {
-            val cutExp2 = cutExp[0].split("let ")
-            if (cutExp2[0] != cutExp[0]){
-                variables.put(cutExp2[1].trimEnd(), countPolishExpr(infixToPolishNotation(cutExp[1])))
+        try {
+            if (cutExp[0] == newExpression) {
+                println(countPolishExpr(infixToPolishNotation(newExpression)))
+            } else {
+                val cutExp2 = cutExp[0].split("let ")
+                if (cutExp2[0] != cutExp[0]) {
+                    variables[cutExp2[1].trimEnd()] = countPolishExpr(infixToPolishNotation(cutExp[1]))
+                }
             }
+        } catch (e: Exception) {
+            println(e)
         }
     }
 }
+
 fun countPolishExpr(stack:LinkedList<Any>):Int{
     var countStack = LinkedList<Int>()
     while(stack.isNotEmpty()){
@@ -49,19 +56,29 @@ fun countPolishExpr(stack:LinkedList<Any>):Int{
             }
         }
     }
-    println(countStack.first)
     return countStack.first
 }
+
 fun infixToPolishNotation(expr: String):LinkedList<Any>{
-    var outStack = LinkedList<Any>()
-    var operationStack = LinkedList<Char>()
+    val outStack = LinkedList<Any>()
+    val operationStack = LinkedList<Char>()
     var stringNumber = ""
+    var stringVariable = ""
     fun check(){
-        if(stringNumber != ""){
+
+        if(stringVariable != ""){
+            val variableValue = variables[stringVariable]
+
+            if(variableValue != null){
+                outStack.push(variableValue)
+                stringVariable = ""
+            } else {
+                throw Exception("No such variable")
+            }
+        } else if(stringNumber != ""){
             outStack.push(stringNumber.toInt())
             stringNumber = ""
         }
-
     }
     fun getPriority(topStack:Char, operation:Char): Boolean{
         if(topStack == '*' || topStack == '/') {
@@ -106,8 +123,11 @@ fun infixToPolishNotation(expr: String):LinkedList<Any>{
                 }
                 //TODO: ERROR whith bracets
             }
-            else -> {
+            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> {
                 stringNumber += i
+            }
+            else -> {
+                stringVariable += i
             }
         }
     }
@@ -126,3 +146,4 @@ fun infixToPolishNotation(expr: String):LinkedList<Any>{
 
 // 3 + 4 * 2 / (1 - 5)
 // (1+2)*4+3
+// let v = (1+2)*4+3
