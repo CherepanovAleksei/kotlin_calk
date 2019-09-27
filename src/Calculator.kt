@@ -19,7 +19,7 @@ class Calculator {
             val cutExp2 = cutExp[0].split("let ")
             if (cutExp2[0] != cutExp[0]) {
                 //создаем переменную и считаем ее значение
-                variables[cutExp2[1].trimEnd()] = countPolishExpr(infixToPolishNotation(cutExp[1]))
+                variables[cutExp2[1].trim()] = countPolishExpr(infixToPolishNotation(cutExp[1]))
             }
             return null
         }
@@ -29,30 +29,35 @@ class Calculator {
     private fun countPolishExpr(stack: LinkedList<Any>): Int {
         val countStack = LinkedList<Int>()
         while (stack.isNotEmpty()) {
-            when (val top = stack.pop()) {
-                '+' -> {
-                    val a = countStack.pop()
-                    val b = countStack.pop()
-                    countStack.push(a + b)
+            try {
+                when (val top = stack.pop()) {
+                    '+' -> {
+                        val a = countStack.pop()
+                        val b = countStack.pop()
+                        countStack.push(a + b)
+                    }
+                    '-' -> {
+                        val a = countStack.pop()
+                        val b = countStack.pop()
+                        countStack.push(b - a)
+                    }
+                    '*' -> {
+                        val a = countStack.pop()
+                        val b = countStack.pop()
+                        countStack.push(a * b)
+                    }
+                    '/' -> {
+                        val a = countStack.pop()
+                        if (a == 0) throw Exception("Devide by zero!!!")
+                        val b = countStack.pop()
+                        countStack.push(b / a)
+                    }
+                    else -> {
+                        countStack.push(top.toString().toInt())
+                    }
                 }
-                '-' -> {
-                    val a = countStack.pop()
-                    val b = countStack.pop()
-                    countStack.push(b - a)
-                }
-                '*' -> {
-                    val a = countStack.pop()
-                    val b = countStack.pop()
-                    countStack.push(a * b)
-                }
-                '/' -> {
-                    val a = countStack.pop()
-                    val b = countStack.pop()
-                    countStack.push(b / a)
-                }
-                else -> {
-                    countStack.push(top.toString().toInt())
-                }
+            } catch (e: Exception){
+                throw Exception("Wrong input expression!!!")
             }
         }
 
@@ -65,21 +70,33 @@ class Calculator {
         val operationStack = LinkedList<Char>()
         var stringNumber = ""
         var stringVariable = ""
+        var isMinusPrefix = true
+        var minus = false
 
         fun check() {
             if (stringVariable != "") {
-                val variableValue = variables[stringVariable]
+                var variableValue = variables[stringVariable]
 
                 if (variableValue != null) {
+                    if (minus) {
+                        variableValue = -variableValue
+                        minus = false
+                    }
                     outStack.push(variableValue)
                     stringVariable = ""
                 } else {
                     throw Exception("No such variable")
                 }
             } else if (stringNumber != "") {
-                outStack.push(stringNumber.toInt())
+                var number = stringNumber.toInt()
+                if (minus) {
+                    number = -number
+                    minus = false
+                }
+                outStack.push(number)
                 stringNumber = ""
             }
+
         }
 
         fun getPriority(topStack: Char, operation: Char): Boolean {
@@ -98,6 +115,12 @@ class Calculator {
                     continue@loop
                 }
                 '+', '-', '*', '/' -> {
+                    if(isMinusPrefix && i == '-'){
+                        minus = true
+                        continue@loop
+                    }
+                    isMinusPrefix = true
+
                     check()
                     if (operationStack.isEmpty()) {
                         operationStack.push(i)
@@ -114,10 +137,12 @@ class Calculator {
                     operationStack.push(i)
                 }
                 '(' -> {
+                    isMinusPrefix = true
                     check()
                     operationStack.push('(')
                 }
                 ')' -> {
+                    isMinusPrefix = false
                     check()
                     if (operationStack.isEmpty()) {
                         throw Exception("Wrong input! Check brackets!")
@@ -130,11 +155,14 @@ class Calculator {
                         }
                         operation = operationStack.pop()
                     }
+
                 }
                 '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> {
+                    isMinusPrefix = false
                     stringNumber += i
                 }
                 else -> {
+                    isMinusPrefix = false
                     stringVariable += i
                 }
             }
